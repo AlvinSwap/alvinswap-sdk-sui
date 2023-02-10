@@ -1,0 +1,49 @@
+{
+  "name": "@alvinswap/sui-sdk",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "3.9.0",
+  "description": "⚒️ An SDK for building applications on top of alvinswap contracts on SUI network",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "alvinswap",
+    "sui"
+  ],
+  "module": "dist/v3-sdk.esm.js",
+  "scripts": {
+    "build": "tsdx build",
+    "start": "tsdx watch",
+    "test": "tsdx test",
+    "prepublishOnly": "tsdx build"
+  },
+  "dependencies": {
+    "@ethersproject/abi": "^5.0.12",
+    "@ethersproject/solidity": "^5.0.9",
+    "@mysten/sui.js": "^0.25.0",
+    "@types/big.js": "^6.1.6",
+    "@uniswap/sdk-core": "^3.0.1",
+    "big.js": "^6.2.1",
+    "sha3": "^2.1.4",
+    "tiny-invariant": "^1.1.0",
+    "tiny-warning": "^1.0.3",
+    "toformat": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.25",
+    "tsdx": "^0.14.1"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "semi": false,
+    "singleQuote": true
+  }
+}
