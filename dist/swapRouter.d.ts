@@ -54,5 +54,5 @@ export declare class SwapRouter {
      * @param trade to produce call parameters for
      * @param options options for the call parameters
      */
-    createSwapTx(coinIns: string[], trade: Trade<SuiCoin, SuiCoin, TradeType>, options: SwapOptions, gasBudget: number): UnserializedSignableTransaction;
+    createSwapTx(coinStores: any, coinIns: string[], trade: Trade<SuiCoin, SuiCoin, TradeType>, options: SwapOptions, gasBudget: number): UnserializedSignableTransaction;
 }

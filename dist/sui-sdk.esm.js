@@ -3041,57 +3041,90 @@ var StateFetcher = /*#__PURE__*/function () {
   function StateFetcher() {}
   StateFetcher.getPoolResourceType = function getPoolResourceType(moduleAddress, token0Address, token1Address, feeAmount) {
     return moduleAddress + "::pool::Pool<" + token0Address + ", " + token1Address + ", " + moduleAddress + getFeeType(feeAmount) + ">";
-  }
-  /**
-   * Produces the on-chain method name to call and the hex encoded parameters to pass as arguments for a given trade.
-   * @param trade to produce call parameters for
-   * @param options options for the call parameters
-   */;
-  StateFetcher.fetchPool =
-  /*#__PURE__*/
-  function () {
-    var _fetchPool = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(token0Address, token1Address, feeAmount, packageId, suiRPC) {
-      var provider, newPoolEventQualifiedName, _yield$Promise$all, coin0, coin1, newPoolEvents, newPoolEvent, poolObjectId, poolObject, poolFields, pool, poolState;
+  };
+  StateFetcher.fetchCoinStoreId = /*#__PURE__*/function () {
+    var _fetchCoinStoreId = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(tokenAddress, packageId, suiRPC) {
+      var provider, eventName, events;
       return _regeneratorRuntime().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
             provider = new JsonRpcProvider(suiRPC);
+            eventName = packageId + "::pool::CoinStoreCreatedEvent<" + tokenAddress + ">";
+            _context.next = 4;
+            return provider.getEvents({
+              MoveEvent: eventName
+            }, null, 1);
+          case 4:
+            events = _context.sent;
+            if (!(!events || !events.data || events.data.length == 0)) {
+              _context.next = 7;
+              break;
+            }
+            return _context.abrupt("return", undefined);
+          case 7:
+            return _context.abrupt("return", events.data[0].event.moveEvent.fields.id);
+          case 8:
+          case "end":
+            return _context.stop();
+        }
+      }, _callee);
+    }));
+    function fetchCoinStoreId(_x, _x2, _x3) {
+      return _fetchCoinStoreId.apply(this, arguments);
+    }
+    return fetchCoinStoreId;
+  }()
+  /**
+   * Produces the on-chain method name to call and the hex encoded parameters to pass as arguments for a given trade.
+   * @param trade to produce call parameters for
+   * @param options options for the call parameters
+   */
+  ;
+  StateFetcher.fetchPool =
+  /*#__PURE__*/
+  function () {
+    var _fetchPool = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(token0Address, token1Address, feeAmount, packageId, suiRPC) {
+      var provider, newPoolEventQualifiedName, _yield$Promise$all, coin0, coin1, newPoolEvents, newPoolEvent, poolObjectId, poolObject, poolFields, pool, poolState;
+      return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+        while (1) switch (_context2.prev = _context2.next) {
+          case 0:
+            provider = new JsonRpcProvider(suiRPC);
             newPoolEventQualifiedName = packageId + "::pool::NewPoolEvent<" + token0Address + ", " + token1Address + ", " + packageId + getFeeType(feeAmount) + ">";
-            _context.t0 = Promise;
-            _context.next = 5;
+            _context2.t0 = Promise;
+            _context2.next = 5;
             return StateFetcher.fetchCoinInfo(token0Address, suiRPC);
           case 5:
-            _context.t1 = _context.sent;
-            _context.next = 8;
+            _context2.t1 = _context2.sent;
+            _context2.next = 8;
             return StateFetcher.fetchCoinInfo(token1Address, suiRPC);
           case 8:
-            _context.t2 = _context.sent;
-            _context.next = 11;
+            _context2.t2 = _context2.sent;
+            _context2.next = 11;
             return provider.getEvents({
               MoveEvent: newPoolEventQualifiedName
             }, null, 1);
           case 11:
-            _context.t3 = _context.sent;
-            _context.t4 = [_context.t1, _context.t2, _context.t3];
-            _context.next = 15;
-            return _context.t0.all.call(_context.t0, _context.t4);
+            _context2.t3 = _context2.sent;
+            _context2.t4 = [_context2.t1, _context2.t2, _context2.t3];
+            _context2.next = 15;
+            return _context2.t0.all.call(_context2.t0, _context2.t4);
           case 15:
-            _yield$Promise$all = _context.sent;
+            _yield$Promise$all = _context2.sent;
             coin0 = _yield$Promise$all[0];
             coin1 = _yield$Promise$all[1];
             newPoolEvents = _yield$Promise$all[2];
             if (!(!newPoolEvents || !newPoolEvents.data || newPoolEvents.data.length == 0)) {
-              _context.next = 21;
+              _context2.next = 21;
               break;
             }
             throw new Error('pool not exist');
           case 21:
             newPoolEvent = newPoolEvents.data[0].event;
             poolObjectId = newPoolEvent.moveEvent.fields.pool_address;
-            _context.next = 25;
+            _context2.next = 25;
             return provider.getObject(poolObjectId);
           case 25:
-            poolObject = _context.sent;
+            poolObject = _context2.sent;
             poolFields = poolObject.details.data.fields;
             pool = new Pool(coin0, coin1, feeAmount, poolFields.slot0.fields.sqrt_price_x96, poolFields.liquidity, i64ToNumber(poolFields.slot0.fields.tick.fields), [], poolObjectId);
             poolState = {
@@ -3127,26 +3160,26 @@ var StateFetcher = /*#__PURE__*/function () {
                 return i64ToNumber(e);
               })
             };
-            return _context.abrupt("return", {
+            return _context2.abrupt("return", {
               pool: pool,
               poolState: poolState
             });
           case 30:
           case "end":
-            return _context.stop();
+            return _context2.stop();
         }
-      }, _callee);
+      }, _callee2);
     }));
-    function fetchPool(_x, _x2, _x3, _x4, _x5) {
+    function fetchPool(_x4, _x5, _x6, _x7, _x8) {
       return _fetchPool.apply(this, arguments);
     }
     return fetchPool;
   }();
   StateFetcher.fetchCoinInfo = /*#__PURE__*/function () {
-    var _fetchCoinInfo = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(coinType, suiRPC) {
+    var _fetchCoinInfo = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(coinType, suiRPC) {
       var ct, provider, coinMetadata;
-      return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-        while (1) switch (_context2.prev = _context2.next) {
+      return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+        while (1) switch (_context3.prev = _context3.next) {
           case 0:
             ct = coinType;
             if (ct.startsWith('coin::Coin<')) {
@@ -3154,102 +3187,102 @@ var StateFetcher = /*#__PURE__*/function () {
             }
             ct = ct.replace(' ', '');
             provider = new JsonRpcProvider(suiRPC);
-            _context2.next = 6;
+            _context3.next = 6;
             return provider.getCoinMetadata(ct);
           case 6:
-            coinMetadata = _context2.sent;
-            return _context2.abrupt("return", new SuiCoin(ct, coinMetadata.decimals, coinMetadata.symbol, coinMetadata.name));
+            coinMetadata = _context3.sent;
+            return _context3.abrupt("return", new SuiCoin(ct, coinMetadata.decimals, coinMetadata.symbol, coinMetadata.name));
           case 8:
           case "end":
-            return _context2.stop();
+            return _context3.stop();
         }
-      }, _callee2);
+      }, _callee3);
     }));
-    function fetchCoinInfo(_x6, _x7) {
+    function fetchCoinInfo(_x9, _x10) {
       return _fetchCoinInfo.apply(this, arguments);
     }
     return fetchCoinInfo;
   }();
   StateFetcher.fetchPoolLiquidity = /*#__PURE__*/function () {
-    var _fetchPoolLiquidity = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(token0Address, token1Address, feeAmount, packageId, suiRPC) {
+    var _fetchPoolLiquidity = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(token0Address, token1Address, feeAmount, packageId, suiRPC) {
       var provider, newPoolEventQualifiedName, newPoolEvents, newPoolEvent, poolObjectId, poolObject, poolFields;
-      return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-        while (1) switch (_context3.prev = _context3.next) {
+      return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+        while (1) switch (_context4.prev = _context4.next) {
           case 0:
             provider = new JsonRpcProvider(suiRPC);
             newPoolEventQualifiedName = packageId + "::pool::NewPoolEvent<" + token0Address + ", " + token1Address + ", " + packageId + getFeeType(feeAmount) + ">";
-            _context3.next = 4;
+            _context4.next = 4;
             return provider.getEvents({
               MoveEvent: newPoolEventQualifiedName
             }, null, 1);
           case 4:
-            newPoolEvents = _context3.sent;
+            newPoolEvents = _context4.sent;
             if (!(!newPoolEvents || !newPoolEvents.data || newPoolEvents.data.length == 0)) {
-              _context3.next = 7;
+              _context4.next = 7;
               break;
             }
             throw new Error('pool not exist');
           case 7:
             newPoolEvent = newPoolEvents.data[0].event;
             poolObjectId = newPoolEvent.moveEvent.fields.pool_address;
-            _context3.next = 11;
+            _context4.next = 11;
             return provider.getObject(poolObjectId);
           case 11:
-            poolObject = _context3.sent;
+            poolObject = _context4.sent;
             poolFields = poolObject.details.data.fields;
-            return _context3.abrupt("return", poolFields.liquidity);
+            return _context4.abrupt("return", poolFields.liquidity);
           case 14:
           case "end":
-            return _context3.stop();
+            return _context4.stop();
         }
-      }, _callee3);
+      }, _callee4);
     }));
-    function fetchPoolLiquidity(_x8, _x9, _x10, _x11, _x12) {
+    function fetchPoolLiquidity(_x11, _x12, _x13, _x14, _x15) {
       return _fetchPoolLiquidity.apply(this, arguments);
     }
     return fetchPoolLiquidity;
   }();
   StateFetcher.fetchSimplePoolInfo = /*#__PURE__*/function () {
-    var _fetchSimplePoolInfo = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(poolObjectId, suiRPC) {
+    var _fetchSimplePoolInfo = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(poolObjectId, suiRPC) {
       var provider, poolObject, poolFields;
-      return _regeneratorRuntime().wrap(function _callee4$(_context4) {
-        while (1) switch (_context4.prev = _context4.next) {
+      return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+        while (1) switch (_context5.prev = _context5.next) {
           case 0:
             provider = new JsonRpcProvider(suiRPC);
-            _context4.next = 3;
+            _context5.next = 3;
             return provider.getObject(poolObjectId);
           case 3:
-            poolObject = _context4.sent;
+            poolObject = _context5.sent;
             poolFields = poolObject.details.data.fields;
-            return _context4.abrupt("return", {
+            return _context5.abrupt("return", {
               liquidity: poolFields.liquidity,
               reserve0: poolFields.reserve_0,
               reserve1: poolFields.reserve_1
             });
           case 6:
           case "end":
-            return _context4.stop();
+            return _context5.stop();
         }
-      }, _callee4);
+      }, _callee5);
     }));
-    function fetchSimplePoolInfo(_x13, _x14) {
+    function fetchSimplePoolInfo(_x16, _x17) {
       return _fetchSimplePoolInfo.apply(this, arguments);
     }
     return fetchSimplePoolInfo;
   }();
   StateFetcher.fetchNFTPosition = /*#__PURE__*/function () {
-    var _fetchNFTPosition = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(objectId, suiRPC) {
+    var _fetchNFTPosition = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6(objectId, suiRPC) {
       var provider, resourcePosition, parsed, fields;
-      return _regeneratorRuntime().wrap(function _callee5$(_context5) {
-        while (1) switch (_context5.prev = _context5.next) {
+      return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+        while (1) switch (_context6.prev = _context6.next) {
           case 0:
             provider = new JsonRpcProvider(suiRPC);
-            _context5.next = 3;
+            _context6.next = 3;
             return provider.getObject(objectId);
           case 3:
-            resourcePosition = _context5.sent;
+            resourcePosition = _context6.sent;
             if (!(!resourcePosition || resourcePosition.status !== "Exists")) {
-              _context5.next = 6;
+              _context6.next = 6;
               break;
             }
             throw new Error('no position associated');
@@ -3257,7 +3290,7 @@ var StateFetcher = /*#__PURE__*/function () {
             parsed = parseTypeFromStr(resourcePosition.details.data.type);
             fields = resourcePosition.details.data.fields;
             console.log(fields);
-            return _context5.abrupt("return", {
+            return _context6.abrupt("return", {
               token0: structTagToString(parsed.struct.typeParams[0]),
               token1: structTagToString(parsed.struct.typeParams[1]),
               fee: feeTypeToFeeAmount(structTagToString(parsed.struct.typeParams[2])),
@@ -3272,31 +3305,31 @@ var StateFetcher = /*#__PURE__*/function () {
             });
           case 10:
           case "end":
-            return _context5.stop();
+            return _context6.stop();
         }
-      }, _callee5);
+      }, _callee6);
     }));
-    function fetchNFTPosition(_x15, _x16) {
+    function fetchNFTPosition(_x18, _x19) {
       return _fetchNFTPosition.apply(this, arguments);
     }
     return fetchNFTPosition;
   }();
   StateFetcher.fetchNFTPositions = /*#__PURE__*/function () {
-    var _fetchNFTPositions = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee8(owner, packageId, suiRPC) {
+    var _fetchNFTPositions = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee9(owner, packageId, suiRPC) {
       var provider, ownedInfoObjects, objectIds, fetchPositionTrial, positions;
-      return _regeneratorRuntime().wrap(function _callee8$(_context8) {
-        while (1) switch (_context8.prev = _context8.next) {
+      return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+        while (1) switch (_context9.prev = _context9.next) {
           case 0:
             provider = new JsonRpcProvider(suiRPC);
-            _context8.next = 3;
+            _context9.next = 3;
             return provider.getObjectsOwnedByAddress(owner);
           case 3:
-            ownedInfoObjects = _context8.sent;
+            ownedInfoObjects = _context9.sent;
             if (!(!ownedInfoObjects || ownedInfoObjects.length == 0)) {
-              _context8.next = 6;
+              _context9.next = 6;
               break;
             }
-            return _context8.abrupt("return", []);
+            return _context9.abrupt("return", []);
           case 6:
             ownedInfoObjects = ownedInfoObjects.filter(function (e) {
               return e.type.startsWith(packageId + "::router::LiquidityPosition<");
@@ -3305,53 +3338,53 @@ var StateFetcher = /*#__PURE__*/function () {
               return e.objectId;
             });
             fetchPositionTrial = /*#__PURE__*/function () {
-              var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7(objectId) {
+              var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee8(objectId) {
                 var nftLiquidityPosition;
-                return _regeneratorRuntime().wrap(function _callee7$(_context7) {
-                  while (1) switch (_context7.prev = _context7.next) {
+                return _regeneratorRuntime().wrap(function _callee8$(_context8) {
+                  while (1) switch (_context8.prev = _context8.next) {
                     case 0:
-                      nftLiquidityPosition = tryCallWithTrial( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
-                        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
-                          while (1) switch (_context6.prev = _context6.next) {
+                      nftLiquidityPosition = tryCallWithTrial( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7() {
+                        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+                          while (1) switch (_context7.prev = _context7.next) {
                             case 0:
-                              return _context6.abrupt("return", StateFetcher.fetchNFTPosition(objectId, suiRPC));
+                              return _context7.abrupt("return", StateFetcher.fetchNFTPosition(objectId, suiRPC));
                             case 1:
                             case "end":
-                              return _context6.stop();
+                              return _context7.stop();
                           }
-                        }, _callee6);
+                        }, _callee7);
                       })));
                       if (!(nftLiquidityPosition == undefined)) {
-                        _context7.next = 3;
+                        _context8.next = 3;
                         break;
                       }
                       throw new Error("cant read position " + objectId);
                     case 3:
-                      return _context7.abrupt("return", nftLiquidityPosition);
+                      return _context8.abrupt("return", nftLiquidityPosition);
                     case 4:
                     case "end":
-                      return _context7.stop();
+                      return _context8.stop();
                   }
-                }, _callee7);
+                }, _callee8);
               }));
-              return function fetchPositionTrial(_x20) {
+              return function fetchPositionTrial(_x23) {
                 return _ref.apply(this, arguments);
               };
             }();
-            _context8.next = 11;
+            _context9.next = 11;
             return Promise.all(objectIds.map(function (e) {
               return fetchPositionTrial(e);
             }));
           case 11:
-            positions = _context8.sent;
-            return _context8.abrupt("return", positions);
+            positions = _context9.sent;
+            return _context9.abrupt("return", positions);
           case 13:
           case "end":
-            return _context8.stop();
+            return _context9.stop();
         }
-      }, _callee8);
+      }, _callee9);
     }));
-    function fetchNFTPositions(_x17, _x18, _x19) {
+    function fetchNFTPositions(_x20, _x21, _x22) {
       return _fetchNFTPositions.apply(this, arguments);
     }
     return fetchNFTPositions;
@@ -3422,7 +3455,7 @@ var PositionManager = /*#__PURE__*/function () {
     return this.moduleAddress;
   };
   _proto.makeCreatePoolTxWithAmounts = /*#__PURE__*/function () {
-    var _makeCreatePoolTxWithAmounts = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(token0, token1, coin0s, coin1s, amount0, amount1, useFullPrecision, feeAmount, sqrtPricex96, sqrtMinPricex96, sqrtMaxPricex96, deadline, recipient, suiRPC, gasBudget) {
+    var _makeCreatePoolTxWithAmounts = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(token0, token1, coinStore0, coinStore1, coin0s, coin1s, amount0, amount1, useFullPrecision, feeAmount, sqrtPricex96, sqrtMinPricex96, sqrtMaxPricex96, deadline, recipient, suiRPC, gasBudget) {
       var coin0Type, coin1Type, position, payload;
       return _regeneratorRuntime().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
@@ -3437,7 +3470,7 @@ var PositionManager = /*#__PURE__*/function () {
             coin1Type = _context.sent;
             position = this.createPosition(coin0Type, coin1Type, amount0, amount1, useFullPrecision, feeAmount, sqrtPricex96, sqrtMinPricex96, sqrtMaxPricex96);
             _context.next = 9;
-            return this.makeCreatePoolTx(coin0s, coin1s, position, deadline, recipient, gasBudget);
+            return this.makeCreatePoolTx(coinStore0, coinStore1, coin0s, coin1s, position, deadline, recipient, gasBudget);
           case 9:
             payload = _context.sent;
             return _context.abrupt("return", payload);
@@ -3447,7 +3480,7 @@ var PositionManager = /*#__PURE__*/function () {
         }
       }, _callee, this);
     }));
-    function makeCreatePoolTxWithAmounts(_x, _x2, _x3, _x4, _x5, _x6, _x7, _x8, _x9, _x10, _x11, _x12, _x13, _x14, _x15) {
+    function makeCreatePoolTxWithAmounts(_x, _x2, _x3, _x4, _x5, _x6, _x7, _x8, _x9, _x10, _x11, _x12, _x13, _x14, _x15, _x16, _x17) {
       return _makeCreatePoolTxWithAmounts.apply(this, arguments);
     }
     return makeCreatePoolTxWithAmounts;
@@ -3469,7 +3502,7 @@ var PositionManager = /*#__PURE__*/function () {
     return position;
   };
   _proto.makeCreatePoolTx = /*#__PURE__*/function () {
-    var _makeCreatePoolTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(coin0s, coin1s, position, deadline, recipient, gasBudget) {
+    var _makeCreatePoolTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(coinStore0, coinStore1, coin0s, coin1s, position, deadline, recipient, gasBudget) {
       var typeArgs, moveCallTx;
       return _regeneratorRuntime().wrap(function _callee2$(_context2) {
         while (1) switch (_context2.prev = _context2.next) {
@@ -3480,7 +3513,7 @@ var PositionManager = /*#__PURE__*/function () {
               module: 'router',
               "function": 'create_pool',
               typeArguments: typeArgs,
-              arguments: [this.poolConfig, this.poolIdsList, this.sharedPositionOwnership, recipient, coin0s, coin1s, position.mintAmounts.amount0.toString(), position.mintAmounts.amount1.toString(), "" + (position.tickLower >= 0 ? position.tickLower : -position.tickLower), position.tickLower >= 0, "" + (position.tickUpper >= 0 ? position.tickUpper : -position.tickUpper), position.tickUpper >= 0, position.pool.sqrtRatioX96.toString(), "" + deadline.toString()],
+              arguments: [this.poolConfig, this.poolIdsList, this.sharedPositionOwnership, coinStore0, coinStore1, recipient, coin0s, coin1s, position.mintAmounts.amount0.toString(), position.mintAmounts.amount1.toString(), "" + (position.tickLower >= 0 ? position.tickLower : -position.tickLower), position.tickLower >= 0, "" + (position.tickUpper >= 0 ? position.tickUpper : -position.tickUpper), position.tickUpper >= 0, position.pool.sqrtRatioX96.toString(), "" + deadline.toString()],
               gasBudget: gasBudget
             };
             return _context2.abrupt("return", {
@@ -3493,13 +3526,13 @@ var PositionManager = /*#__PURE__*/function () {
         }
       }, _callee2, this);
     }));
-    function makeCreatePoolTx(_x16, _x17, _x18, _x19, _x20, _x21) {
+    function makeCreatePoolTx(_x18, _x19, _x20, _x21, _x22, _x23, _x24, _x25) {
       return _makeCreatePoolTx.apply(this, arguments);
     }
     return makeCreatePoolTx;
   }();
   _proto.makeMintTx = /*#__PURE__*/function () {
-    var _makeMintTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(coin0s, coin1s, position, slippageTolerance, recipient, deadline, gasBudget) {
+    var _makeMintTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(coinStore0, coinStore1, coin0s, coin1s, position, slippageTolerance, recipient, deadline, gasBudget) {
       var _position$pool$object;
       var _position$mintAmounts, amount0Desired, amount1Desired, minimumAmounts, amount0Min, amount1Min, typeArgs, moveCallTx;
       return _regeneratorRuntime().wrap(function _callee3$(_context3) {
@@ -3523,7 +3556,7 @@ var PositionManager = /*#__PURE__*/function () {
               module: 'router',
               "function": 'mint',
               typeArguments: typeArgs,
-              arguments: [this.poolConfig, (_position$pool$object = position.pool.objectId) == null ? void 0 : _position$pool$object.toString(), this.sharedPositionOwnership, coin0s, coin1s, "" + (position.tickLower >= 0 ? position.tickLower : -position.tickLower), position.tickLower >= 0, "" + (position.tickUpper >= 0 ? position.tickUpper : -position.tickUpper), position.tickUpper >= 0, amount0Desired.toString(), amount1Desired.toString(), amount0Min, amount1Min, recipient, "" + deadline.toString()],
+              arguments: [this.poolConfig, (_position$pool$object = position.pool.objectId) == null ? void 0 : _position$pool$object.toString(), this.sharedPositionOwnership, coinStore0, coinStore1, coin0s, coin1s, "" + (position.tickLower >= 0 ? position.tickLower : -position.tickLower), position.tickLower >= 0, "" + (position.tickUpper >= 0 ? position.tickUpper : -position.tickUpper), position.tickUpper >= 0, amount0Desired.toString(), amount1Desired.toString(), amount0Min, amount1Min, recipient, "" + deadline.toString()],
               gasBudget: gasBudget
             };
             return _context3.abrupt("return", {
@@ -3536,13 +3569,13 @@ var PositionManager = /*#__PURE__*/function () {
         }
       }, _callee3, this);
     }));
-    function makeMintTx(_x22, _x23, _x24, _x25, _x26, _x27, _x28) {
+    function makeMintTx(_x26, _x27, _x28, _x29, _x30, _x31, _x32, _x33, _x34) {
       return _makeMintTx.apply(this, arguments);
     }
     return makeMintTx;
   }();
   _proto.makeIncreaseLiquidityTx = /*#__PURE__*/function () {
-    var _makeIncreaseLiquidityTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(coin0s, coin1s, position, positionObjectId, slippage, deadline, gasBudget) {
+    var _makeIncreaseLiquidityTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(coinStore0, coinStore1, coin0s, coin1s, position, positionObjectId, slippage, deadline, gasBudget) {
       var _position$mintAmounts2, amount0Desired, amount1Desired, minimumAmounts, amount0Min, amount1Min, typeArgs, moveCallTx;
       return _regeneratorRuntime().wrap(function _callee4$(_context4) {
         while (1) switch (_context4.prev = _context4.next) {
@@ -3559,7 +3592,7 @@ var PositionManager = /*#__PURE__*/function () {
               module: 'router',
               "function": 'increase_liquidity',
               typeArguments: typeArgs,
-              arguments: [this.poolConfig, (position.pool.objectId ? position.pool.objectId : '0').toString(), this.sharedPositionOwnership, positionObjectId, coin0s, coin1s, amount0Desired.toString(), amount1Desired.toString(), amount0Min, amount1Min, "" + deadline.toString()],
+              arguments: [this.poolConfig, (position.pool.objectId ? position.pool.objectId : '0').toString(), this.sharedPositionOwnership, coinStore0, coinStore1, positionObjectId, coin0s, coin1s, amount0Desired.toString(), amount1Desired.toString(), amount0Min, amount1Min, "" + deadline.toString()],
               gasBudget: gasBudget
             };
             return _context4.abrupt("return", {
@@ -3572,13 +3605,13 @@ var PositionManager = /*#__PURE__*/function () {
         }
       }, _callee4, this);
     }));
-    function makeIncreaseLiquidityTx(_x29, _x30, _x31, _x32, _x33, _x34, _x35) {
+    function makeIncreaseLiquidityTx(_x35, _x36, _x37, _x38, _x39, _x40, _x41, _x42, _x43) {
       return _makeIncreaseLiquidityTx.apply(this, arguments);
     }
     return makeIncreaseLiquidityTx;
   }();
   _proto.makeRemoveLiquidityTx = /*#__PURE__*/function () {
-    var _makeRemoveLiquidityTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(position, positionObjectId, slippage, deadline, collectCoin, gasBudget) {
+    var _makeRemoveLiquidityTx = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(coinStore0, coinStore1, position, positionObjectId, slippage, deadline, collectCoin, gasBudget) {
       var minimumAmounts, amount0Min, amount1Min, typeArgs, moveCallTx;
       return _regeneratorRuntime().wrap(function _callee5$(_context5) {
         while (1) switch (_context5.prev = _context5.next) {
@@ -3594,7 +3627,7 @@ var PositionManager = /*#__PURE__*/function () {
               module: 'router',
               "function": 'decrease_liquidity',
               typeArguments: typeArgs,
-              arguments: [this.poolConfig, (position.pool.objectId ? position.pool.objectId : '0').toString(), this.sharedPositionOwnership, positionObjectId, position.liquidity.toString(), amount0Min, amount1Min, collectCoin, "" + deadline.toString()],
+              arguments: [this.poolConfig, (position.pool.objectId ? position.pool.objectId : '0').toString(), this.sharedPositionOwnership, coinStore0, coinStore1, positionObjectId, position.liquidity.toString(), amount0Min, amount1Min, collectCoin, "" + deadline.toString()],
               gasBudget: gasBudget
             };
             return _context5.abrupt("return", {
@@ -3607,7 +3640,7 @@ var PositionManager = /*#__PURE__*/function () {
         }
       }, _callee5, this);
     }));
-    function makeRemoveLiquidityTx(_x36, _x37, _x38, _x39, _x40, _x41) {
+    function makeRemoveLiquidityTx(_x44, _x45, _x46, _x47, _x48, _x49, _x50, _x51) {
       return _makeRemoveLiquidityTx.apply(this, arguments);
     }
     return makeRemoveLiquidityTx;
@@ -3701,7 +3734,7 @@ var SwapRouter = /*#__PURE__*/function () {
     return this.moduleAddress;
   };
   _proto.getSwapRouterAddress = function getSwapRouterAddress() {
-    return this.moduleAddress;
+    return this.swapRouter;
   };
   _proto.getQuotes = /*#__PURE__*/function () {
     var _getQuotes = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(tokenIn, tokenOut, swapType, amount, poolsWithTicks) {
@@ -3827,7 +3860,7 @@ var SwapRouter = /*#__PURE__*/function () {
    * @param options options for the call parameters
    */
   ;
-  _proto.createSwapTx = function createSwapTx(coinIns, trade, options, gasBudget) {
+  _proto.createSwapTx = function createSwapTx(coinStores, coinIns, trade, options, gasBudget) {
     var sampleTrade = trade;
     var tokenIn = sampleTrade.inputAmount.currency.wrapped;
     var tokenOut = sampleTrade.outputAmount.currency.wrapped;
@@ -3851,31 +3884,31 @@ var SwapRouter = /*#__PURE__*/function () {
       var pool = route.pools[0];
       var typeArgs = [pool.token0.address.toString(), pool.token1.address.toString(), this.moduleAddress + getFeeType(pool.fee)];
       var zeroForOne = route.tokenPath[0].address.replace(' ', '') == pool.token0.address.replace(' ', '');
-      var args = [this.poolConfig, pool.objectId ? pool.objectId.toString() : '', zeroForOne ? coinIns : [], zeroForOne ? [] : coinIns, amountIn, amountOut, ((_options$sqrtPriceLim = options.sqrtPriceLimitX96) != null ? _options$sqrtPriceLim : 0).toString(), zeroForOne, deadline.toString()];
+      var args = [this.poolConfig, pool.objectId ? pool.objectId.toString() : '', coinStores[pool.token0.address], coinStores[pool.token1.address], zeroForOne ? coinIns : [], zeroForOne ? [] : coinIns, amountIn, amountOut, ((_options$sqrtPriceLim = options.sqrtPriceLimitX96) != null ? _options$sqrtPriceLim : 0).toString(), zeroForOne, deadline.toString()];
       if (trade.tradeType === TradeType.EXACT_INPUT) {
         var moveCallTx = {
           packageObjectId: this.getSwapRouterAddress(),
-          module: 'router',
+          module: 'swap_router',
           "function": 'exact_input_2',
           typeArguments: typeArgs,
           arguments: args,
           gasBudget: gasBudget
         };
         return {
-          kind: "moveCall",
+          kind: 'moveCall',
           data: moveCallTx
         };
       } else {
         var _moveCallTx = {
           packageObjectId: this.getSwapRouterAddress(),
-          module: 'router',
+          module: 'swap_router',
           "function": 'exact_output_2',
           typeArguments: typeArgs,
           arguments: args,
           gasBudget: gasBudget
         };
         return {
-          kind: "moveCall",
+          kind: 'moveCall',
           data: _moveCallTx
         };
       }
@@ -3898,78 +3931,92 @@ var SwapRouter = /*#__PURE__*/function () {
       }
       var isExactIn = trade.tradeType === TradeType.EXACT_INPUT;
       var intremediateToken = token0;
-      var funName = isExactIn ? 'exact_input_two_hops_intermediate_0' : 'exact_output_two_hops_intermediate_0';
-      var firstCoins = route.input.address == token1 ? coinIns : [];
-      var secondCoins = route.input.address == token1 ? [] : coinIns;
+      var funName = isExactIn ? 'exact_input_two_hops' : 'exact_output_two_hops';
+      var coinLists = [coinIns, [], []];
+      if (route.input.address === token1) {
+        coinLists = [[], coinIns, []];
+      } else if (route.input.address === token2) {
+        coinLists = [[], [], coinIns];
+      }
       var firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1];
       var secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0];
       if (intremediateToken === route.input.address || intremediateToken === route.output.address) {
         intremediateToken = token1;
-        funName = isExactIn ? 'exact_input_two_hops_intermediate_1' : 'exact_output_two_hops_intermediate_1';
-        firstCoins = route.input.address == token0 ? coinIns : [];
-        secondCoins = route.input.address == token0 ? [] : coinIns;
         firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1];
         secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0];
       }
       if (intremediateToken === route.input.address || intremediateToken === route.output.address) {
         intremediateToken = token2;
-        funName = isExactIn ? 'exact_input_two_hops_intermediate_2' : 'exact_output_two_hops_intermediate_2';
-        firstCoins = route.input.address == token0 ? coinIns : [];
-        secondCoins = route.input.address == token0 ? [] : coinIns;
         firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[0] : pools[1];
         secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[1] : pools[0];
       }
-      var _typeArgs = [token0, token1, token2, route.input.address, this.moduleAddress + getFeeType(firstPool.fee), this.moduleAddress + getFeeType(secondPool.fee)];
-      var _args2 = [this.poolConfig, firstPool.objectId ? firstPool.objectId.toString() : '', secondPool.objectId ? secondPool.objectId.toString() : '', firstCoins, secondCoins, amountIn, amountOut, ((_options$sqrtPriceLim2 = options.sqrtPriceLimitX96) != null ? _options$sqrtPriceLim2 : 0).toString(), deadline.toString()];
+      var _typeArgs = [token0, token1, token2, route.input.address, route.output.address, this.moduleAddress + getFeeType(firstPool.fee), this.moduleAddress + getFeeType(secondPool.fee)];
+      var _args2 = [this.poolConfig, firstPool.objectId ? firstPool.objectId.toString() : '', secondPool.objectId ? secondPool.objectId.toString() : '', coinStores[token0], coinStores[token1], coinStores[token2], coinLists[0], coinLists[1], coinLists[2], amountIn, amountOut, ((_options$sqrtPriceLim2 = options.sqrtPriceLimitX96) != null ? _options$sqrtPriceLim2 : 0).toString(), deadline.toString()];
       var _moveCallTx2 = {
         packageObjectId: this.getSwapRouterAddress(),
-        module: 'router',
+        module: 'swap_router',
         "function": funName,
         typeArguments: _typeArgs,
         arguments: _args2,
         gasBudget: gasBudget
       };
       return {
-        kind: "moveCall",
+        kind: 'moveCall',
         data: _moveCallTx2
       };
     } else if (route.pools.length == 3) {
-      throw new Error('unsupported multihop');
-      //   const pools = route.pools
-      //   const typeArgs = [
-      //     pools[0].token0.address.toString(), 
-      //     pools[0].token1.address.toString(), 
-      //     pools[1].token0.address.toString(),
-      //     pools[1].token1.address.toString(),
-      //     pools[2].token0.address.toString(),
-      //     pools[2].token1.address.toString(),
-      //     this.moduleAddress + getFeeType(pools[0].fee),
-      //     this.moduleAddress + getFeeType(pools[1].fee),
-      //     this.moduleAddress + getFeeType(pools[2].fee),
-      //     route.input.address,
-      //     route.output.address
-      //   ]
-      //   const args = [
-      //     amountIn, 
-      //     amountOut, 
-      //     ((options.sqrtPriceLimitX96 ?? 0)).toString(),
-      //     deadline
-      //   ]
-      //   if (trade.tradeType === TradeType.EXACT_INPUT) {
-      //     return {
-      //       type: 'entry_function_payload',
-      //       function: `${this.getModuleAddress()}::router::exact_input_three_hops`,
-      //       type_arguments: typeArgs,
-      //       arguments: args
-      //     } 
-      //   } else {
-      //     return {
-      //       type: 'entry_function_payload',
-      //       function: `${this.getModuleAddress()}::router::exact_output_three_hops`,
-      //       type_arguments: typeArgs,
-      //       arguments: args
-      //     }
-      //   }
+      var _options$sqrtPriceLim3;
+      var _pools = route.pools;
+      var _ref4 = [_pools[0].token0.address, _pools[0].token1.address],
+        _token = _ref4[0],
+        _token2 = _ref4[1];
+      var _token3 = _pools[1].token0.address == _token || _pools[1].token0.address == _token2 ? _pools[1].token1.address : _pools[1].token0.address;
+      if (!sortBefore(_token2, _token3)) {
+        var _ref5 = [_token3, _token2];
+        _token2 = _ref5[0];
+        _token3 = _ref5[1];
+        if (!sortBefore(_token, _token2)) {
+          var _ref6 = [_token2, _token];
+          _token = _ref6[0];
+          _token2 = _ref6[1];
+        }
+      }
+      var tokenPreOutAddress = _pools[2].token0.address == route.output.address ? _pools[2].token1.address : _pools[2].token0.address;
+      var _isExactIn = trade.tradeType === TradeType.EXACT_INPUT;
+      var _intremediateToken = _token;
+      var _funName = _isExactIn ? 'exact_input_three_hops' : 'exact_output_three_hops';
+      var _coinLists = [coinIns, [], []];
+      if (route.input.address === _token2) {
+        _coinLists = [[], coinIns, []];
+      } else if (route.input.address === _token3) {
+        _coinLists = [[], [], coinIns];
+      }
+      var _firstPool = _pools[0].token0.address == _token && _pools[0].token1.address == _token2 ? _pools[0] : _pools[1];
+      var _secondPool = _pools[0].token0.address == _token && _pools[0].token1.address == _token2 ? _pools[1] : _pools[0];
+      if (_intremediateToken === route.input.address || _intremediateToken === tokenPreOutAddress) {
+        _intremediateToken = _token2;
+        _firstPool = _pools[0].token0.address == _token && _pools[0].token1.address == _token2 ? _pools[0] : _pools[1];
+        _secondPool = _pools[0].token0.address == _token && _pools[0].token1.address == _token2 ? _pools[1] : _pools[0];
+      }
+      if (_intremediateToken === route.input.address || _intremediateToken === tokenPreOutAddress) {
+        _intremediateToken = _token3;
+        _firstPool = _pools[0].token0.address == _token && _pools[0].token1.address == _token3 ? _pools[0] : _pools[1];
+        _secondPool = _pools[0].token0.address == _token && _pools[0].token1.address == _token3 ? _pools[1] : _pools[0];
+      }
+      var _typeArgs2 = [_token, _token2, _token3, route.input.address, tokenPreOutAddress, route.output.address, this.moduleAddress + getFeeType(_firstPool.fee), this.moduleAddress + getFeeType(_secondPool.fee), this.moduleAddress + getFeeType(_pools[2].fee)];
+      var _args3 = [this.poolConfig, _firstPool.objectId ? _firstPool.objectId.toString() : '', _secondPool.objectId ? _secondPool.objectId.toString() : '', _pools[2].objectId ? _pools[2].objectId.toString() : '', coinStores[_token], coinStores[_token2], coinStores[_token3], coinStores[route.output.address], _coinLists[0], _coinLists[1], _coinLists[2], amountIn, amountOut, ((_options$sqrtPriceLim3 = options.sqrtPriceLimitX96) != null ? _options$sqrtPriceLim3 : 0).toString(), deadline.toString()];
+      var _moveCallTx3 = {
+        packageObjectId: this.getSwapRouterAddress(),
+        module: 'swap_router',
+        "function": _funName,
+        typeArguments: _typeArgs2,
+        arguments: _args3,
+        gasBudget: gasBudget
+      };
+      return {
+        kind: 'moveCall',
+        data: _moveCallTx3
+      };
     } else {
       //TODO: implement multihops
       throw new Error('unsupported multihop');

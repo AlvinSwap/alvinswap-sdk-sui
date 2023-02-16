@@ -170,6 +170,8 @@ export class PositionManager {
   public async makeCreatePoolTxWithAmounts(
     token0: string,
     token1: string,
+    coinStore0: string,
+    coinStore1: string,
     coin0s: string[],
     coin1s: string[],
     amount0: BigintIsh,
@@ -187,7 +189,7 @@ export class PositionManager {
     const coin0Type = await StateFetcher.fetchCoinInfo(token0, suiRPC)
     const coin1Type = await StateFetcher.fetchCoinInfo(token1, suiRPC)
     const position = this.createPosition(coin0Type, coin1Type, amount0, amount1, useFullPrecision, feeAmount, sqrtPricex96, sqrtMinPricex96, sqrtMaxPricex96)
-    const payload = await this.makeCreatePoolTx(coin0s, coin1s, position, deadline, recipient, gasBudget)
+    const payload = await this.makeCreatePoolTx(coinStore0, coinStore1, coin0s, coin1s, position, deadline, recipient, gasBudget)
     return payload
   }
 
@@ -219,6 +221,8 @@ export class PositionManager {
   }
 
   public async makeCreatePoolTx(
+    coinStore0: string,
+    coinStore1: string,
     coin0s: string[],
     coin1s: string[],
     position: Position,
@@ -241,6 +245,8 @@ export class PositionManager {
         this.poolConfig,
         this.poolIdsList,
         this.sharedPositionOwnership,
+        coinStore0,
+        coinStore1,
         recipient,
         coin0s, 
         coin1s,
@@ -263,6 +269,8 @@ export class PositionManager {
   }
 
   public async makeMintTx(
+    coinStore0: string,
+    coinStore1: string,
     coin0s: string[],
     coin1s: string[],
     position: Position,
@@ -298,6 +306,8 @@ export class PositionManager {
         this.poolConfig,
         position.pool.objectId?.toString(),
         this.sharedPositionOwnership,
+        coinStore0,
+        coinStore1,
         coin0s, 
         coin1s,
         `${(position.tickLower >= 0 ? position.tickLower : -position.tickLower)}`,
@@ -321,6 +331,8 @@ export class PositionManager {
   }
 
   public async makeIncreaseLiquidityTx(
+      coinStore0: string,
+      coinStore1: string,
       coin0s: string[],
       coin1s: string[],
       position: Position, 
@@ -352,6 +364,8 @@ export class PositionManager {
         this.poolConfig,
         (position.pool.objectId ? position.pool.objectId : '0').toString(),
         this.sharedPositionOwnership,
+        coinStore0,
+        coinStore1,
         positionObjectId,
         coin0s, 
         coin1s,
@@ -371,6 +385,8 @@ export class PositionManager {
   }
 
   public async makeRemoveLiquidityTx(
+      coinStore0: string,
+      coinStore1: string,
       position: Position, 
       positionObjectId: string, 
       slippage: SlippageParams, 
@@ -398,6 +414,8 @@ export class PositionManager {
         this.poolConfig,
         (position.pool.objectId ? position.pool.objectId : '0').toString(),
         this.sharedPositionOwnership,
+        coinStore0,
+        coinStore1,
         positionObjectId,
         position.liquidity.toString(),
         amount0Min,

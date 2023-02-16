@@ -89,6 +89,7 @@ export interface NFTLiquidityPosition {
  */
 export declare class StateFetcher {
     static getPoolResourceType(moduleAddress: string, token0Address: string, token1Address: string, feeAmount: FeeAmount): string;
+    static fetchCoinStoreId(tokenAddress: string, packageId: string, suiRPC: string): Promise<string | undefined>;
     /**
      * Produces the on-chain method name to call and the hex encoded parameters to pass as arguments for a given trade.
      * @param trade to produce call parameters for

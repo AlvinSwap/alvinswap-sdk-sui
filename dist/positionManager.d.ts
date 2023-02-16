@@ -126,10 +126,10 @@ export declare class PositionManager {
      */
     constructor(moduleId: string, poolConfig: string, poolIdsList: string, sharedPositionOwnership: string);
     getModuleAddress(): string;
-    makeCreatePoolTxWithAmounts(token0: string, token1: string, coin0s: string[], coin1s: string[], amount0: BigintIsh, amount1: BigintIsh, useFullPrecision: boolean, feeAmount: FeeAmount, sqrtPricex96: string, sqrtMinPricex96: string, sqrtMaxPricex96: string, deadline: number, recipient: string, suiRPC: string, gasBudget: number): Promise<UnserializedSignableTransaction>;
+    makeCreatePoolTxWithAmounts(token0: string, token1: string, coinStore0: string, coinStore1: string, coin0s: string[], coin1s: string[], amount0: BigintIsh, amount1: BigintIsh, useFullPrecision: boolean, feeAmount: FeeAmount, sqrtPricex96: string, sqrtMinPricex96: string, sqrtMaxPricex96: string, deadline: number, recipient: string, suiRPC: string, gasBudget: number): Promise<UnserializedSignableTransaction>;
     createPosition(coin0: SuiCoin, coin1: SuiCoin, amount0: BigintIsh, amount1: BigintIsh, useFullPrecision: boolean, feeAmount: FeeAmount, sqrtPricex96: string, sqrtMinPricex96: string, sqrtMaxPricex96: string): Position;
-    makeCreatePoolTx(coin0s: string[], coin1s: string[], position: Position, deadline: number, recipient: string, gasBudget: number): Promise<UnserializedSignableTransaction>;
-    makeMintTx(coin0s: string[], coin1s: string[], position: Position, slippageTolerance: SlippageParams, recipient: string, deadline: number, gasBudget: number): Promise<UnserializedSignableTransaction>;
-    makeIncreaseLiquidityTx(coin0s: string[], coin1s: string[], position: Position, positionObjectId: string, slippage: SlippageParams, deadline: number, gasBudget: number): Promise<UnserializedSignableTransaction>;
-    makeRemoveLiquidityTx(position: Position, positionObjectId: string, slippage: SlippageParams, deadline: number, collectCoin: boolean, gasBudget: number): Promise<UnserializedSignableTransaction>;
+    makeCreatePoolTx(coinStore0: string, coinStore1: string, coin0s: string[], coin1s: string[], position: Position, deadline: number, recipient: string, gasBudget: number): Promise<UnserializedSignableTransaction>;
+    makeMintTx(coinStore0: string, coinStore1: string, coin0s: string[], coin1s: string[], position: Position, slippageTolerance: SlippageParams, recipient: string, deadline: number, gasBudget: number): Promise<UnserializedSignableTransaction>;
+    makeIncreaseLiquidityTx(coinStore0: string, coinStore1: string, coin0s: string[], coin1s: string[], position: Position, positionObjectId: string, slippage: SlippageParams, deadline: number, gasBudget: number): Promise<UnserializedSignableTransaction>;
+    makeRemoveLiquidityTx(coinStore0: string, coinStore1: string, position: Position, positionObjectId: string, slippage: SlippageParams, deadline: number, collectCoin: boolean, gasBudget: number): Promise<UnserializedSignableTransaction>;
 }

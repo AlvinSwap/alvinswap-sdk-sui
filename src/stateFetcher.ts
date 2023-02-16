@@ -113,6 +113,19 @@ export class StateFetcher {
   ): string {
     return `${moduleAddress}::pool::Pool<${token0Address}, ${token1Address}, ${moduleAddress}${getFeeType(feeAmount)}>`
   }
+
+  public static async fetchCoinStoreId(tokenAddress: string, packageId: string, suiRPC: string): Promise<string | undefined> {
+    const provider = new JsonRpcProvider(suiRPC)
+    const eventName = `${packageId}::pool::CoinStoreCreatedEvent<${tokenAddress}>`
+    const events = await provider.getEvents({
+      MoveEvent: eventName
+    }, null, 1)
+    if (!events || !events.data || events.data.length == 0) {
+      return undefined
+    }
+    return (events.data[0].event as any).moveEvent.fields.id
+  }
+
   /**
    * Produces the on-chain method name to call and the hex encoded parameters to pass as arguments for a given trade.
    * @param trade to produce call parameters for

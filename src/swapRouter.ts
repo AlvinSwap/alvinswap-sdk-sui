@@ -39,12 +39,12 @@ export interface SwapOptions {
 }
 
 export interface PoolWithTicks {
-  pool: Pool,
+  pool: Pool
   ticks: SimpleTickState[]
 }
 
 export interface Quote {
-  trade: Trade<SuiCoin, SuiCoin, TradeType>,
+  trade: Trade<SuiCoin, SuiCoin, TradeType>
   isBest: boolean
 }
 
@@ -66,10 +66,16 @@ export class SwapRouter {
   }
 
   public getSwapRouterAddress(): string {
-    return this.moduleAddress
+    return this.swapRouter
   }
 
-  public async getQuotes(tokenIn: SuiCoin, tokenOut: SuiCoin, swapType: TradeType, amount: string, poolsWithTicks: PoolWithTicks[]): Promise<Quote[]> {
+  public async getQuotes(
+    tokenIn: SuiCoin,
+    tokenOut: SuiCoin,
+    swapType: TradeType,
+    amount: string,
+    poolsWithTicks: PoolWithTicks[]
+  ): Promise<Quote[]> {
     const pools = poolsWithTicks.map(p => {
       const pool = p.pool
       // invariant(pool.token0 == tokenIn || pool.token0 == tokenOut, 'TOKEN_IN_DIFF')
@@ -81,7 +87,7 @@ export class SwapRouter {
     const quotes: Quote[] = []
     let bestTrade: Trade<SuiCoin, SuiCoin, TradeType> | undefined = undefined
     if (swapType == TradeType.EXACT_INPUT) {
-      for(const pool of pools) {
+      for (const pool of pools) {
         try {
           const trade = await Trade.exactIn(
             new Route([pool], tokenIn, tokenOut),
@@ -103,7 +109,7 @@ export class SwapRouter {
         }
       }
     } else {
-      for(const pool of pools) {
+      for (const pool of pools) {
         try {
           const trade = await Trade.exactOut(
             new Route([pool], tokenIn, tokenOut),
@@ -142,6 +148,7 @@ export class SwapRouter {
    * @param options options for the call parameters
    */
   public createSwapTx(
+    coinStores: any,
     coinIns: string[],
     trade: Trade<SuiCoin, SuiCoin, TradeType>,
     options: SwapOptions,
@@ -169,80 +176,89 @@ export class SwapRouter {
     // flag for whether the trade is single hop or not
     if (singleHop) {
       const pool = route.pools[0]
-      const typeArgs = [pool.token0.address.toString(), pool.token1.address.toString(), this.moduleAddress + getFeeType(pool.fee)]
+      const typeArgs = [
+        pool.token0.address.toString(),
+        pool.token1.address.toString(),
+        this.moduleAddress + getFeeType(pool.fee)
+      ]
       const zeroForOne = route.tokenPath[0].address.replace(' ', '') == pool.token0.address.replace(' ', '')
       const args = [
         this.poolConfig,
-        pool.objectId? pool.objectId.toString() : '',
+        pool.objectId ? pool.objectId.toString() : '',
+        coinStores[pool.token0.address],
+        coinStores[pool.token1.address],
         zeroForOne ? coinIns : [],
         zeroForOne ? [] : coinIns,
-        amountIn, 
-        amountOut, 
+        amountIn,
+        amountOut,
         (options.sqrtPriceLimitX96 ?? 0).toString(),
         zeroForOne,
         deadline.toString()
       ]
       if (trade.tradeType === TradeType.EXACT_INPUT) {
         const moveCallTx = {
-            packageObjectId: this.getSwapRouterAddress(),
-            module: 'router',
-            function: 'exact_input_2',
-            typeArguments: typeArgs,
-            arguments: args,
-            gasBudget: gasBudget
+          packageObjectId: this.getSwapRouterAddress(),
+          module: 'swap_router',
+          function: 'exact_input_2',
+          typeArguments: typeArgs,
+          arguments: args,
+          gasBudget: gasBudget
         }
-    
+
         return {
-            kind: "moveCall",
-            data: moveCallTx
+          kind: 'moveCall',
+          data: moveCallTx
         }
       } else {
         const moveCallTx = {
-            packageObjectId: this.getSwapRouterAddress(),
-            module: 'router',
-            function: 'exact_output_2',
-            typeArguments: typeArgs,
-            arguments: args,
-            gasBudget: gasBudget
+          packageObjectId: this.getSwapRouterAddress(),
+          module: 'swap_router',
+          function: 'exact_output_2',
+          typeArguments: typeArgs,
+          arguments: args,
+          gasBudget: gasBudget
         }
-    
+
         return {
-            kind: "moveCall",
-            data: moveCallTx
+          kind: 'moveCall',
+          data: moveCallTx
         }
       }
     } else if (route.pools.length == 2) {
       const pools = route.pools
       let [token0, token1] = [pools[0].token0.address, pools[0].token1.address]
-      let token2 = (pools[1].token0.address == token0 || pools[1].token0.address == token1) ? pools[1].token1.address : pools[1].token0.address
+      let token2 =
+        pools[1].token0.address == token0 || pools[1].token0.address == token1
+          ? pools[1].token1.address
+          : pools[1].token0.address
       if (!sortBefore(token1, token2)) {
-        [token1, token2] = [token2, token1]
+        ;[token1, token2] = [token2, token1]
         if (!sortBefore(token0, token1)) {
-          [token0, token1] = [token1, token0]
-        } 
+          ;[token0, token1] = [token1, token0]
+        }
       }
-      
+
       const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
       let intremediateToken = token0
-      let funName = isExactIn ? 'exact_input_two_hops_intermediate_0' : 'exact_output_two_hops_intermediate_0'
-      let firstCoins = route.input.address == token1 ? coinIns : []
-      let secondCoins = route.input.address == token1 ? [] : coinIns
+      let funName = isExactIn ? 'exact_input_two_hops' : 'exact_output_two_hops'
+
+      let coinLists = [coinIns, [], []]
+      if (route.input.address === token1) {
+        coinLists = [[], coinIns, []]
+      } else if (route.input.address === token2) {
+        coinLists = [[], [], coinIns]
+      }
+
       let firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1]
       let secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0]
 
       if (intremediateToken === route.input.address || intremediateToken === route.output.address) {
         intremediateToken = token1
-        funName = isExactIn ? 'exact_input_two_hops_intermediate_1' : 'exact_output_two_hops_intermediate_1'
-        firstCoins = route.input.address == token0 ? coinIns : []
-        secondCoins = route.input.address == token0 ? [] : coinIns
         firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1]
         secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0]
       }
       if (intremediateToken === route.input.address || intremediateToken === route.output.address) {
         intremediateToken = token2
-        funName = isExactIn ? 'exact_input_two_hops_intermediate_2' : 'exact_output_two_hops_intermediate_2'
-        firstCoins = route.input.address == token0 ? coinIns : []
-        secondCoins = route.input.address == token0 ? [] : coinIns
         firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[0] : pools[1]
         secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[1] : pools[0]
       }
@@ -252,6 +268,7 @@ export class SwapRouter {
         token1,
         token2,
         route.input.address,
+        route.output.address,
         this.moduleAddress + getFeeType(firstPool.fee),
         this.moduleAddress + getFeeType(secondPool.fee)
       ]
@@ -260,64 +277,114 @@ export class SwapRouter {
         this.poolConfig,
         firstPool.objectId ? firstPool.objectId.toString() : '',
         secondPool.objectId ? secondPool.objectId.toString() : '',
-        firstCoins,
-        secondCoins,
-        amountIn, 
-        amountOut, 
+        coinStores[token0],
+        coinStores[token1],
+        coinStores[token2],
+        coinLists[0],
+        coinLists[1],
+        coinLists[2],
+        amountIn,
+        amountOut,
         (options.sqrtPriceLimitX96 ?? 0).toString(),
         deadline.toString()
       ]
-      
+
       const moveCallTx = {
         packageObjectId: this.getSwapRouterAddress(),
-        module: 'router',
+        module: 'swap_router',
         function: funName,
         typeArguments: typeArgs,
         arguments: args,
         gasBudget: gasBudget
       }
-  
+
       return {
-          kind: "moveCall",
-          data: moveCallTx
+        kind: 'moveCall',
+        data: moveCallTx
       }
     } else if (route.pools.length == 3) {
-        throw new Error('unsupported multihop')
-    //   const pools = route.pools
-    //   const typeArgs = [
-    //     pools[0].token0.address.toString(), 
-    //     pools[0].token1.address.toString(), 
-    //     pools[1].token0.address.toString(),
-    //     pools[1].token1.address.toString(),
-    //     pools[2].token0.address.toString(),
-    //     pools[2].token1.address.toString(),
-    //     this.moduleAddress + getFeeType(pools[0].fee),
-    //     this.moduleAddress + getFeeType(pools[1].fee),
-    //     this.moduleAddress + getFeeType(pools[2].fee),
-    //     route.input.address,
-    //     route.output.address
-    //   ]
-    //   const args = [
-    //     amountIn, 
-    //     amountOut, 
-    //     ((options.sqrtPriceLimitX96 ?? 0)).toString(),
-    //     deadline
-    //   ]
-    //   if (trade.tradeType === TradeType.EXACT_INPUT) {
-    //     return {
-    //       type: 'entry_function_payload',
-    //       function: `${this.getModuleAddress()}::router::exact_input_three_hops`,
-    //       type_arguments: typeArgs,
-    //       arguments: args
-    //     } 
-    //   } else {
-    //     return {
-    //       type: 'entry_function_payload',
-    //       function: `${this.getModuleAddress()}::router::exact_output_three_hops`,
-    //       type_arguments: typeArgs,
-    //       arguments: args
-    //     }
-    //   }
+      const pools = route.pools
+      let [token0, token1] = [pools[0].token0.address, pools[0].token1.address]
+      let token2 =
+        pools[1].token0.address == token0 || pools[1].token0.address == token1
+          ? pools[1].token1.address
+          : pools[1].token0.address
+      if (!sortBefore(token1, token2)) {
+        ;[token1, token2] = [token2, token1]
+        if (!sortBefore(token0, token1)) {
+          ;[token0, token1] = [token1, token0]
+        }
+      }
+      const tokenPreOutAddress = pools[2].token0.address == route.output.address ? pools[2].token1.address : pools[2].token0.address
+
+      const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
+      let intremediateToken = token0
+      let funName = isExactIn ? 'exact_input_three_hops' : 'exact_output_three_hops'
+
+      let coinLists = [coinIns, [], []]
+      if (route.input.address === token1) {
+        coinLists = [[], coinIns, []]
+      } else if (route.input.address === token2) {
+        coinLists = [[], [], coinIns]
+      }
+
+      let firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1]
+      let secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0]
+
+      if (intremediateToken === route.input.address || intremediateToken === tokenPreOutAddress) {
+        intremediateToken = token1
+        firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1]
+        secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0]
+      }
+      if (intremediateToken === route.input.address || intremediateToken === tokenPreOutAddress) {
+        intremediateToken = token2
+        firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[0] : pools[1]
+        secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[1] : pools[0]
+      }
+
+      const typeArgs = [
+        token0,
+        token1,
+        token2,
+        route.input.address,
+        tokenPreOutAddress,
+        route.output.address,
+        this.moduleAddress + getFeeType(firstPool.fee),
+        this.moduleAddress + getFeeType(secondPool.fee),
+        this.moduleAddress + getFeeType(pools[2].fee)
+      ]
+
+      const args = [
+        this.poolConfig,
+        firstPool.objectId ? firstPool.objectId.toString() : '',
+        secondPool.objectId ? secondPool.objectId.toString() : '',
+        pools[2].objectId ? pools[2].objectId.toString() : '',
+        coinStores[token0],
+        coinStores[token1],
+        coinStores[token2],
+        coinStores[route.output.address],
+        coinLists[0],
+        coinLists[1],
+        coinLists[2],
+        amountIn,
+        amountOut,
+        (options.sqrtPriceLimitX96 ?? 0).toString(),
+        deadline.toString()
+      ]
+
+      const moveCallTx = {
+        packageObjectId: this.getSwapRouterAddress(),
+        module: 'swap_router',
+        function: funName,
+        typeArguments: typeArgs,
+        arguments: args,
+        gasBudget: gasBudget
+      }
+
+      return {
+        kind: 'moveCall',
+        data: moveCallTx
+      }
     } else {
       //TODO: implement multihops
       throw new Error('unsupported multihop')
