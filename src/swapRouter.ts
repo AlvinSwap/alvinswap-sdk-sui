@@ -385,6 +385,97 @@ export class SwapRouter {
         kind: 'moveCall',
         data: moveCallTx
       }
+    } else if (route.pools.length == 4) {
+      const pools = route.pools
+      let [token0, token1] = [pools[0].token0.address, pools[0].token1.address]
+      let token2 =
+        pools[1].token0.address == token0 || pools[1].token0.address == token1
+          ? pools[1].token1.address
+          : pools[1].token0.address
+      if (!sortBefore(token1, token2)) {
+        ;[token1, token2] = [token2, token1]
+        if (!sortBefore(token0, token1)) {
+          ;[token0, token1] = [token1, token0]
+        }
+      }
+      const tokenPreOutAddress = pools[3].token0.address == route.output.address ? pools[3].token1.address : pools[3].token0.address
+      const tokenPrePreOutAddress = pools[2].token0.address == tokenPreOutAddress ? pools[2].token1.address : pools[2].token0.address
+
+      const isExactIn = trade.tradeType === TradeType.EXACT_INPUT
+      let intremediateToken = token0
+      let funName = isExactIn ? 'exact_input_four_hops' : 'exact_output_four_hops'
+
+      let coinLists = [coinIns, [], []]
+      if (route.input.address === token1) {
+        coinLists = [[], coinIns, []]
+      } else if (route.input.address === token2) {
+        coinLists = [[], [], coinIns]
+      }
+
+      let firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1]
+      let secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0]
+
+      if (intremediateToken === route.input.address || intremediateToken === tokenPrePreOutAddress) {
+        intremediateToken = token1
+        firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[0] : pools[1]
+        secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token1 ? pools[1] : pools[0]
+      }
+      if (intremediateToken === route.input.address || intremediateToken === tokenPrePreOutAddress) {
+        intremediateToken = token2
+        firstPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[0] : pools[1]
+        secondPool = pools[0].token0.address == token0 && pools[0].token1.address == token2 ? pools[1] : pools[0]
+      }
+
+      const poolOut = (pools[2].token0.address == tokenPreOutAddress && pools[2].token1.address == route.output.address) || 
+            (pools[2].token0.address == route.output.address && pools[2].token1.address == tokenPreOutAddress) ? pools[2] : pools[3]
+      const poolPreout = pools[2] == poolOut ? pools[3] : pools[2]
+      const typeArgs = [
+        token0,
+        token1,
+        token2,
+        route.input.address,
+        tokenPrePreOutAddress,
+        tokenPreOutAddress,
+        route.output.address,
+        this.moduleAddress + getFeeType(firstPool.fee),
+        this.moduleAddress + getFeeType(secondPool.fee),
+        this.moduleAddress + getFeeType(poolPreout.fee),
+        this.moduleAddress + getFeeType(poolOut.fee)
+      ]
+
+      const args = [
+        this.poolConfig,
+        firstPool.objectId ? firstPool.objectId.toString() : '',
+        secondPool.objectId ? secondPool.objectId.toString() : '',
+        poolPreout.objectId ? poolPreout.objectId.toString() : '',
+        poolOut.objectId ? poolOut.objectId.toString() : '',
+        coinStores[token0],
+        coinStores[token1],
+        coinStores[token2],
+        coinStores[tokenPreOutAddress],
+        coinStores[route.output.address],
+        coinLists[0],
+        coinLists[1],
+        coinLists[2],
+        amountIn,
+        amountOut,
+        (options.sqrtPriceLimitX96 ?? 0).toString(),
+        deadline.toString()
+      ]
+
+      const moveCallTx = {
+        packageObjectId: this.getSwapRouterAddress(),
+        module: 'swap_router',
+        function: funName,
+        typeArguments: typeArgs,
+        arguments: args,
+        gasBudget: gasBudget
+      }
+
+      return {
+        kind: 'moveCall',
+        data: moveCallTx
+      }
     } else {
       //TODO: implement multihops
       throw new Error('unsupported multihop')

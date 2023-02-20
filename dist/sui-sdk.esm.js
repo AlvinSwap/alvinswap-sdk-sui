@@ -4017,6 +4017,62 @@ var SwapRouter = /*#__PURE__*/function () {
         kind: 'moveCall',
         data: _moveCallTx3
       };
+    } else if (route.pools.length == 4) {
+      var _options$sqrtPriceLim4;
+      var _pools2 = route.pools;
+      var _ref7 = [_pools2[0].token0.address, _pools2[0].token1.address],
+        _token4 = _ref7[0],
+        _token5 = _ref7[1];
+      var _token6 = _pools2[1].token0.address == _token4 || _pools2[1].token0.address == _token5 ? _pools2[1].token1.address : _pools2[1].token0.address;
+      if (!sortBefore(_token5, _token6)) {
+        var _ref8 = [_token6, _token5];
+        _token5 = _ref8[0];
+        _token6 = _ref8[1];
+        if (!sortBefore(_token4, _token5)) {
+          var _ref9 = [_token5, _token4];
+          _token4 = _ref9[0];
+          _token5 = _ref9[1];
+        }
+      }
+      var _tokenPreOutAddress = _pools2[3].token0.address == route.output.address ? _pools2[3].token1.address : _pools2[3].token0.address;
+      var tokenPrePreOutAddress = _pools2[2].token0.address == _tokenPreOutAddress ? _pools2[2].token1.address : _pools2[2].token0.address;
+      var _isExactIn2 = trade.tradeType === TradeType.EXACT_INPUT;
+      var _intremediateToken2 = _token4;
+      var _funName2 = _isExactIn2 ? 'exact_input_four_hops' : 'exact_output_four_hops';
+      var _coinLists2 = [coinIns, [], []];
+      if (route.input.address === _token5) {
+        _coinLists2 = [[], coinIns, []];
+      } else if (route.input.address === _token6) {
+        _coinLists2 = [[], [], coinIns];
+      }
+      var _firstPool2 = _pools2[0].token0.address == _token4 && _pools2[0].token1.address == _token5 ? _pools2[0] : _pools2[1];
+      var _secondPool2 = _pools2[0].token0.address == _token4 && _pools2[0].token1.address == _token5 ? _pools2[1] : _pools2[0];
+      if (_intremediateToken2 === route.input.address || _intremediateToken2 === tokenPrePreOutAddress) {
+        _intremediateToken2 = _token5;
+        _firstPool2 = _pools2[0].token0.address == _token4 && _pools2[0].token1.address == _token5 ? _pools2[0] : _pools2[1];
+        _secondPool2 = _pools2[0].token0.address == _token4 && _pools2[0].token1.address == _token5 ? _pools2[1] : _pools2[0];
+      }
+      if (_intremediateToken2 === route.input.address || _intremediateToken2 === tokenPrePreOutAddress) {
+        _intremediateToken2 = _token6;
+        _firstPool2 = _pools2[0].token0.address == _token4 && _pools2[0].token1.address == _token6 ? _pools2[0] : _pools2[1];
+        _secondPool2 = _pools2[0].token0.address == _token4 && _pools2[0].token1.address == _token6 ? _pools2[1] : _pools2[0];
+      }
+      var poolOut = _pools2[2].token0.address == _tokenPreOutAddress && _pools2[2].token1.address == route.output.address || _pools2[2].token0.address == route.output.address && _pools2[2].token1.address == _tokenPreOutAddress ? _pools2[2] : _pools2[3];
+      var poolPreout = _pools2[2] == poolOut ? _pools2[3] : _pools2[2];
+      var _typeArgs3 = [_token4, _token5, _token6, route.input.address, tokenPrePreOutAddress, _tokenPreOutAddress, route.output.address, this.moduleAddress + getFeeType(_firstPool2.fee), this.moduleAddress + getFeeType(_secondPool2.fee), this.moduleAddress + getFeeType(poolPreout.fee), this.moduleAddress + getFeeType(poolOut.fee)];
+      var _args4 = [this.poolConfig, _firstPool2.objectId ? _firstPool2.objectId.toString() : '', _secondPool2.objectId ? _secondPool2.objectId.toString() : '', poolPreout.objectId ? poolPreout.objectId.toString() : '', poolOut.objectId ? poolOut.objectId.toString() : '', coinStores[_token4], coinStores[_token5], coinStores[_token6], coinStores[_tokenPreOutAddress], coinStores[route.output.address], _coinLists2[0], _coinLists2[1], _coinLists2[2], amountIn, amountOut, ((_options$sqrtPriceLim4 = options.sqrtPriceLimitX96) != null ? _options$sqrtPriceLim4 : 0).toString(), deadline.toString()];
+      var _moveCallTx4 = {
+        packageObjectId: this.getSwapRouterAddress(),
+        module: 'swap_router',
+        "function": _funName2,
+        typeArguments: _typeArgs3,
+        arguments: _args4,
+        gasBudget: gasBudget
+      };
+      return {
+        kind: 'moveCall',
+        data: _moveCallTx4
+      };
     } else {
       //TODO: implement multihops
       throw new Error('unsupported multihop');
